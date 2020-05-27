@@ -4,13 +4,28 @@ Created on Tue May 19 22:15:30 2020
 
 @author: Jonathan Yepez
 """
-import readSentimientos #file that reads Sentimientos.txt
+#Importing the relevant libraries
 import json #library to parse info from a json formatted .txt file
 import html #library to convert HTML entities to String html.unescape()
 from langdetect import detect #library to detect tweet's language
+from nltk.corpus import stopwords
 
-values = readSentimientos.read_Sentiments("Sentimientos.txt") #read list of words and values from Sentimientos.txt
-#------------------------------------------------------------------------------
+#==============================================================================
+#Define the function to read the file Sentimientos.txt
+def read_Sentiments(file_sentimientos):
+    sentiments = open(file_sentimientos)
+    values={}
+    for line in sentiments:
+        term, value = line.split("\t")
+        values[term] = int(value)
+        #print(values.items())
+    return values
+#-----------------
+values = read_Sentiments("Sentimientos.txt") #read list of words and values from Sentimientos.txt
+
+
+#==============================================================================
+#Initialize arrays and dictionaries that will be used in the analysis
 tweets_arr = [] #create an empty list of tweets that will contain info in json format
 tweets = {} #initialize empty tweets dictionary
 english_tweets = {} #initialize an empty dict for tweets that are in English
@@ -37,33 +52,20 @@ for k in range(len(tweets)): #Now we are going to analyse every tweet's text
     #first we filter by language -> if the text is in english, then we can calculate sentiment
     #if the text is NOT in English we can just set the sentiment value to 0    
     texto = tweets[k]
-    #print("analysing tweet number: " + str(k))
     try:
         if(detect(texto.lower())=='en'): #if the tweet is in Enlgish
-            #temp = html.unescape(texto).split(" ")
             english_tweets[en_count] = html.unescape(texto) #save the unescaped text in English
             en_count += 1
 
         else:
-            #print("----string in another language----")
-            #temp = html.unescape(texto).split(" ")
             other_tweets[other_count] = html.unescape(texto) #save the unescaped non-english text in other tweets
             other_count += 1
-            #print("--------")
-            
-        
-        #print(k,texto)
         
     except:
-        #print("there was an error with the text")
         error_tweets[err_count] = html.unescape(texto) #save the unescaped error text in error_tweets
         err_count += 1
-        
-        
-    #texto = texto.split(" ")
-    #print(i, texto)
-    
-#----------------Function to Calculate Sentiment Value------------------------#
+
+#----------------Function to Calculate Tweet's Sentiment----------------------#
     
 def calc_sent(text):
     sentiment_value = 0 #initialize sentiment value as 0
@@ -85,29 +87,37 @@ def calc_sent(text):
 #------------------------------------------------------------------------------
     
 #Process English tweets
-#index = 0
-print("\nAnalyzing Tweets in Enlgish...\n")
+#print("\nAnalyzing Tweets in Enlgish...\n")
 for tweet in english_tweets:
     v = calc_sent(english_tweets[tweet])
     temp = (english_tweets[tweet],v)
-    #print("EL SIGUIENTE TWEET: '"+english_tweets[tweet]+"' TIENE UN SENTIMIENTO ASOCIADO DE: "+str(v))
     final_values.append(temp)
 
-
-print("\nAnalyzing Tweets in other languages...\n")
+#Processing tweets that were not considered English text
+#print("\nAnalyzing Tweets in other languages...\n")
 for tweet in other_tweets:
     v=calc_sent(other_tweets[tweet])
     temp = (other_tweets[tweet],v)
-    #print("EL SIGUIENTE TWEET: '"+other_tweets[tweet]+"' TIENE UN SENTIMIENTO ASOCIADO DE: "+str(v))
+    #WE NEED TO CHECK WETHER THERE ARE USEFUL WORDS HERE OR NOT!
+    #1. TOKENIZE
+    #2. CHECK FOR VALUES IN THE DICTIONARY{VALUES}
+    #3. CALCULATE AFTER DEPURATION
+    #4. IF V!=0 THEN ASSUME THERE IS VALUABLE INFORMATION THERE AND APPEND TO FINAL
     if(v!=0):
         final_values.append(temp)
+        
         
 for item in final_values:
     print("EL SIGUIENTE TWEET: '"+item[0]+"' TIENE UN SENTIMIENTO ASOCIADO DE: "+str(item[1]))
     
-                
+ 
+###############################################################################               
 # Ejercicio 2
-#para cada tweet, establecer valores para cada palabra.
+#para cada tweet, establecer valores para cada palabra que NO este en el listado values
+
+#PODEMOS CONSIDERAR UN CASO EN EL QUE DEL TWEET QUE TENEMOS REALIZAMOS UNA DEPURACION 
+#PARA DESPUES ANALIZAR PALABRA POR PALABRA Y DETERMINAR LA INFO RELEVANTE
+
 
 def wordValues(tweet, value): #tweet-> String, #value -> integer
     #we check the number of alphanumeric subelements
